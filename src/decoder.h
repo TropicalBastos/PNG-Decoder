@@ -7,6 +7,7 @@
 #include <fstream>
 
 #define PNG_HEADER_IDENTIFIER "IHDR"
+#define PNG_DATA_IDENTIFIER "IDAT"
 
 struct RGBPixel {
     uint8_t red;
@@ -38,6 +39,13 @@ struct PNG_header
     uint8_t interlace_method;
 };
 
+enum PNG_data_type
+{
+    NONE,
+    IHDR,
+    IDAT
+};
+
 class PNGDecoder {
 public:
     PNGDecoder(char* path);
@@ -47,6 +55,9 @@ private:
     std::fstream fs;
     PNG_signature signature;
     bool checkSignature();
+    void scanHeader();
+    uint32_t scanNextDataLen();
+    PNG_data_type scanNextDataType();
 };
 
 #endif
