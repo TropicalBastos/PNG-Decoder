@@ -51,6 +51,7 @@ public:
     PNGDecoder(char* path);
     ~PNGDecoder();
     std::vector<RGBPixel> decode();
+    uint32_t toLittleEndian(char* buffer);
 private:
     std::fstream fs;
     PNG_signature signature;
@@ -58,6 +59,7 @@ private:
     void scanHeader();
     uint32_t scanNextDataLen();
     PNG_data_type scanNextDataType();
+    PNG_data_type scanChunkHdr();
 };
 
 #endif

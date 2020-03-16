@@ -15,32 +15,58 @@ PNGDecoder::~PNGDecoder()
 std::vector<RGBPixel> PNGDecoder::decode()
 {
     if (checkSignature()) {
-        printf("PNG signature verified");
+        std::cout << "PNG signature verified" << std::endl;
     } else {
         std::cerr << "Not a PNG file..." << std::endl;
         return std::vector<RGBPixel>();
     }
 
     int len = scanNextDataLen();
-    while (len != 0) {
 
-        scanNextDataLen();
+    while (len != 0) {
+        PNG_data_type type = scanChunkHdr();
+        len = scanNextDataLen();
     }
 
     return std::vector<RGBPixel>();
 }
 
-uint32_t PNGDecoder::scanNextDataLen() {
-    uint32_t len;
+PNG_data_type PNGDecoder::scanChunkHdr() 
+{
+    char chunkId[5];
+    if (!fs.eof() && fs.read(chunkId, 4)) {
+        chunkId[4] = '\0';
+        if (strcmp(chunkId, "IHDR") == 0) {
+            return PNG_data_type::IHDR;
+        } else if (strcmp(chunkId, "IDAT")) {
+            return PNG_data_type::IDAT;
+        } else {
+            return PNG_data_type::NONE;
+        }
+    } else {
+        return PNG_data_type::NONE;
+    }
+}
 
-    if (!fs.eof() && fs.read((char*) &len, sizeof(len))) {
-        return len;
+uint32_t PNGDecoder::scanNextDataLen() 
+{
+    uint32_t len;
+    char buffer[4];
+
+    if (!fs.eof() && fs.read(buffer, sizeof(len))) {
+        return toLittleEndian(buffer);
     } else {
         return 0;
     }
 }
 
-PNG_data_type PNGDecoder::scanNextDataType() {
+uint32_t PNGDecoder::toLittleEndian(char* buffer)
+{
+    return (int)buffer[3] | (int)buffer[2]<<8 | (int)buffer[1]<<16 | (int)buffer[0]<<24;
+}
+
+PNG_data_type PNGDecoder::scanNextDataType() 
+{
     char type[4];
     fs.read(type, 4);
 
