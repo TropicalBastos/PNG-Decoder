@@ -55,11 +55,17 @@ public:
 private:
     std::fstream fs;
     PNG_signature signature;
+    PNG_header hdr;
+    std::vector<RGBPixel> pixels;
+
     bool checkSignature();
     void scanHeader();
     uint32_t scanNextDataLen();
     PNG_data_type scanNextDataType();
     PNG_data_type scanChunkHdr();
+    void readHdr();
+    void readAppropriateChunk(PNG_data_type type);
+    void readDataChunk();
 };
 
 #endif

@@ -14,6 +14,9 @@ PNGDecoder::~PNGDecoder()
 
 std::vector<RGBPixel> PNGDecoder::decode()
 {
+    // reset inner pixel data
+    pixels = std::vector<RGBPixel>();
+
     if (checkSignature()) {
         std::cout << "PNG signature verified" << std::endl;
     } else {
@@ -29,6 +32,32 @@ std::vector<RGBPixel> PNGDecoder::decode()
     }
 
     return std::vector<RGBPixel>();
+}
+
+void PNGDecoder::readAppropriateChunk(PNG_data_type type)
+{
+    switch(type) {
+        case PNG_data_type::IHDR: {
+            readHdr();
+            break;
+        }
+        case PNG_data_type::IDAT: {
+            break;
+        }
+        case PNG_data_type::NONE:
+        default:
+            break;
+    }
+}
+
+void PNGDecoder::readHdr()
+{
+    fs.read(reinterpret_cast<char*>(&hdr), sizeof(hdr));
+}
+
+void PNGDecoder::readDataChunk()
+{
+    return;
 }
 
 PNG_data_type PNGDecoder::scanChunkHdr() 
