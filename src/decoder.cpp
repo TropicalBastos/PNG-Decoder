@@ -28,10 +28,14 @@ std::vector<RGBPixel> PNGDecoder::decode()
 
     while (len != 0) {
         PNG_data_type type = scanChunkHdr();
+        if (type == PNG_data_type::NONE) {
+            break;
+        }
+        readAppropriateChunk(type);
         len = scanNextDataLen();
     }
 
-    return std::vector<RGBPixel>();
+    return pixels;
 }
 
 void PNGDecoder::readAppropriateChunk(PNG_data_type type)
