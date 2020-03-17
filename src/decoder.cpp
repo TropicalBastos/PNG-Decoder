@@ -114,8 +114,8 @@ PNG_data_type PNGDecoder::scanNextDataType()
 
 bool PNGDecoder::checkSignature()
 {
-    // FIXME we need to check that the file size is 8 bytes or over
     fs.read((char*) &signature, sizeof(PNG_signature));
+    if (fs.fail()) return false;
     return (
         signature.entry == 0x89 &&
         signature.p == 0x50 &&
