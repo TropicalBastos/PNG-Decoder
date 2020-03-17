@@ -37,6 +37,7 @@ struct PNG_header
     uint8_t compression_method;
     uint8_t filter_method;
     uint8_t interlace_method;
+    uint8_t crc;
 };
 
 enum PNG_data_type
