@@ -1,6 +1,7 @@
 #include "decoder.h"
 #include "./zlib/zlib.h"
 #include <iostream>
+#include <arpa/inet.h>
 
 PNGDecoder::PNGDecoder(char* path)
 {
@@ -58,6 +59,8 @@ void PNGDecoder::readAppropriateChunk(PNG_data_type type)
 void PNGDecoder::readHdr()
 {
     fs.read(reinterpret_cast<char*>(&hdr), sizeof(hdr));
+    hdr.height = ntohl(hdr.height);
+    hdr.width = ntohl(hdr.width);
 }
 
 void PNGDecoder::readDataChunk()
