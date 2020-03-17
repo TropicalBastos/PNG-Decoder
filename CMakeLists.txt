@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(FindPackageHandleStandardArgs)
 include(FindSDL2)
 
-file (GLOB SRC_FILES src/*.h src/*.cpp)
+file (GLOB SRC_FILES src/*.cpp src/zlib/*.c)
 
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIRS})

@@ -1,4 +1,5 @@
 #include "decoder.h"
+#include "./zlib/zlib.h"
 #include <iostream>
 
 PNGDecoder::PNGDecoder(char* path)
