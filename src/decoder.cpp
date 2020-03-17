@@ -67,7 +67,7 @@ void PNGDecoder::readDataChunk()
 PNG_data_type PNGDecoder::scanChunkHdr() 
 {
     char chunkId[5];
-    if (!fs.eof() && fs.read(chunkId, 4)) {
+    if (!fs.eof() && fs.read(chunkId, 4) && !fs.fail()) {
         chunkId[4] = '\0';
         if (strcmp(chunkId, "IHDR") == 0) {
             return PNG_data_type::IHDR;
@@ -86,7 +86,7 @@ uint32_t PNGDecoder::scanNextDataLen()
     uint32_t len;
     char buffer[4];
 
-    if (!fs.eof() && fs.read(buffer, sizeof(len))) {
+    if (!fs.eof() && fs.read(buffer, sizeof(len)) && !fs.fail()) {
         return toLittleEndian(buffer);
     } else {
         return 0;
