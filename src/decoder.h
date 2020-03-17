@@ -44,7 +44,8 @@ enum PNG_data_type
 {
     NONE,
     IHDR,
-    IDAT
+    IDAT,
+    IEND
 };
 
 class PNGDecoder {
@@ -58,6 +59,7 @@ private:
     PNG_signature signature;
     PNG_header hdr;
     std::vector<RGBPixel> pixels;
+    std::vector<std::vector<uint32_t>> scanLines;
 
     bool checkSignature();
     void scanHeader();

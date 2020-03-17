@@ -18,6 +18,7 @@ std::vector<RGBPixel> PNGDecoder::decode()
 {
     // reset inner pixel data
     pixels = std::vector<RGBPixel>();
+    scanLines = std::vector<std::vector<uint32_t>>();
 
     if (checkSignature()) {
         std::cout << "PNG signature verified" << std::endl;
@@ -33,8 +34,15 @@ std::vector<RGBPixel> PNGDecoder::decode()
         if (type == PNG_data_type::NONE) {
             break;
         }
+        if (type == PNG_data_type::IEND) {
+            break;
+        }
         readAppropriateChunk(type);
         len = scanNextDataLen();
+    }
+
+    if (scanLines.size() == 0) {
+        return pixels;
     }
 
     return pixels;
@@ -50,7 +58,6 @@ void PNGDecoder::readAppropriateChunk(PNG_data_type type)
         case PNG_data_type::IDAT: {
             break;
         }
-        case PNG_data_type::NONE:
         default:
             break;
     }
