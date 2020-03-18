@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <vector>
 #include <fstream>
+#include <string>
 
 #define PNG_HEADER_IDENTIFIER "IHDR"
 #define PNG_DATA_IDENTIFIER "IDAT"
@@ -37,12 +38,11 @@ struct PNG_header
     uint8_t compression_method;
     uint8_t filter_method;
     uint8_t interlace_method;
-    uint8_t crc;
 };
 
 enum PNG_data_type
 {
-    NONE,
+    UNKNOWN,
     IHDR,
     IDAT,
     IEND
@@ -53,7 +53,7 @@ public:
     PNGDecoder(char* path);
     ~PNGDecoder();
     std::vector<RGBPixel> decode();
-    uint32_t toLittleEndian(char* buffer);
+    uint32_t toLittleEndian(unsigned char* buffer);
 private:
     std::fstream fs;
     PNG_signature signature;
@@ -67,8 +67,10 @@ private:
     PNG_data_type scanNextDataType();
     PNG_data_type scanChunkHdr();
     void readHdr();
-    void readAppropriateChunk(PNG_data_type type);
+    void readAppropriateChunk(PNG_data_type type, uint32_t len);
     void readDataChunk();
+    void readIDATChunk(uint32_t len);
+    std::string decompressChunk(unsigned char * in, uint32_t len);
 };
 
 #endif
