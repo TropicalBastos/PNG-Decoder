@@ -60,6 +60,7 @@ private:
     PNG_header hdr;
     std::vector<RGBPixel> pixels;
     std::vector<std::vector<uint32_t>> scanLines;
+    unsigned cpos = 12;
 
     bool checkSignature();
     void scanHeader();
@@ -68,9 +69,7 @@ private:
     PNG_data_type scanChunkHdr();
     void readHdr();
     void readAppropriateChunk(PNG_data_type type, uint32_t len);
-    void readDataChunk();
-    void readIDATChunk(uint32_t len);
-    std::string decompressChunk(unsigned char * in, uint32_t len);
+    std::string readIDATStream(uint32_t len);
 };
 
 #endif
