@@ -56,7 +56,7 @@ std::vector<RGBPixel> PNGDecoder::decode()
 
         readAppropriateChunk(type, len);
 
-        // if last known type was IDAT then it did its own streamn processing
+        // if last known type was IDAT then it did its own stream processing
         // which means we don't need to invoke the entire SCAN_MOVE_CURSOR macro
         if (type == PNG_data_type::IDAT) {
             len = scanNextDataLen();
@@ -133,7 +133,7 @@ std::string PNGDecoder::readIDATStream(uint32_t len)
             
         } while (strm.avail_out == 0);
 
-        cpos += len;
+        cpos += mutableLen;
         cpos += CRC_LEN;
         fs.seekg(cpos);
         mutableLen = scanNextDataLen();
