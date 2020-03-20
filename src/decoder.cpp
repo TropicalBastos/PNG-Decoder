@@ -45,6 +45,7 @@ std::vector<RGBPixel> PNGDecoder::decode()
         PNG_data_type type = scanChunkHdr();
         std::cout << "Chunk data length: " << len << std::endl;
         cpos += CHUNK_TYPE_LEN;
+
         if (type == PNG_data_type::UNKNOWN) {
             SCAN_MOVE_CURSOR
             continue;
@@ -55,6 +56,11 @@ std::vector<RGBPixel> PNGDecoder::decode()
         }
 
         readAppropriateChunk(type, len);
+
+        if (type == PNG_data_type::IHDR) {
+            printf("Width: %d | Height: %d\n", hdr.width, hdr.height);
+            printf("Color type: %d | Bit depth: %d\n", hdr.color_type, hdr.bit_depth);
+        }
 
         // if last known type was IDAT then it did its own stream processing
         // which means we don't need to invoke the entire SCAN_MOVE_CURSOR macro
