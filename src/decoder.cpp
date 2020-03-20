@@ -59,7 +59,7 @@ std::vector<RGBPixel> PNGDecoder::decode()
 
         if (type == PNG_data_type::IHDR) {
             printf("Width: %d | Height: %d\n", hdr.width, hdr.height);
-            printf("Color type: %d | Bit depth: %d\n", hdr.color_type, hdr.bit_depth);
+            printf("Color type: %d | Bit depth: %d | Filter method: %d\n", hdr.color_type, hdr.bit_depth, hdr.filter_method);
         }
 
         // if last known type was IDAT then it did its own stream processing
