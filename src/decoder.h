@@ -28,6 +28,7 @@ private:
     void readHdr();
     void readAppropriateChunk(PNG_data_type type, uint32_t len);
     std::string readIDATStream(uint32_t len);
+    void processScanlines(const std::string buffer);
 };
 
 #endif

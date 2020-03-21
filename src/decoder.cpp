@@ -79,6 +79,69 @@ std::vector<RGBPixel> PNGDecoder::decode()
     return pixels;
 }
 
+void PNGDecoder::processScanlines(const std::string buffer)
+{
+
+    switch (hdr.color_type) {
+        case PNG_color_type::RGB:
+        case PNG_color_type::RGBA: {
+            if (hdr.bit_depth == 8) {
+
+                int multiplier = hdr.color_type == PNG_color_type::RGB ? 3 : 4;
+                std::vector<std::vector<uint8_t>> filteredBytes;
+                int cursor = 0;
+
+                for (int scanline = 0; scanline < hdr.height; scanline++) {
+                    uint8_t filter_byte = buffer[cursor];
+                    cursor++;
+                    std::vector<uint8_t> rowBytes;
+                    rowBytes.push_back(filter_byte);
+
+                    for (int column = 0; column < (hdr.width * multiplier); column++) {
+                        int pos = cursor + column;
+                        if (pos < buffer.size()) {
+                            rowBytes.push_back(static_cast<uint8_t>(buffer[pos]));
+                        }
+                        cursor++;
+                    }
+
+                    filteredBytes.push_back(rowBytes);
+                }
+
+            } else if (hdr.bit_depth == 16) {
+                
+                int multiplier = hdr.color_type == PNG_color_type::RGB ? 3 : 4;
+                std::vector<std::vector<uint16_t>> filteredBytes;
+                int cursor = 0;
+
+                for (int scanline = 0; scanline < hdr.height; scanline++) {
+                    uint16_t filter_byte = static_cast<uint16_t>(buffer[cursor]);
+                    cursor++;
+                    std::vector<uint16_t> rowBytes;
+                    rowBytes.push_back(filter_byte);
+
+                    for (int column = 0; column < (hdr.width * multiplier); column++) {
+                        int pos = cursor + column;
+                        int pos2 = pos + 1;
+                        if (pos2 < buffer.size()) {
+                            rowBytes.push_back(static_cast<uint16_t>(
+                                (buffer[pos] << 8) | buffer[pos2])
+                            );
+                        }
+                        cursor += 2;
+                    }
+
+                    filteredBytes.push_back(rowBytes);
+                }
+
+            }
+        }
+        
+        default:
+            break;
+    }
+}
+
 std::string PNGDecoder::readIDATStream(uint32_t len)
 {
     uint32_t mutableLen = len;
@@ -185,7 +248,9 @@ void PNGDecoder::readAppropriateChunk(PNG_data_type type, uint32_t len)
             break;
         }
         case PNG_data_type::IDAT: {
-            readIDATStream(len);
+            std::string decompressed = readIDATStream(len);
+            processScanlines(decompressed);
+            std::cout << "Scanlines processed" << std::endl;
             break;
         }
         default:

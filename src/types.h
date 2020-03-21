@@ -48,6 +48,26 @@ enum PNG_data_type
     IEND
 };
 
+enum PNG_color_type
+{
+    GRAYSCALE,
+    PADDING_1,
+    RGB,
+    PLTE,
+    GRAYSCALE_ALPHA,
+    PADDING_2,
+    RGBA
+};
+
+enum PNG_filter_type
+{
+    NONE,
+    SUB,
+    UP,
+    AVERAGE,
+    PAETH
+};
+
 /**
  Color    Allowed    Interpretation
    Type    Bit Depths
