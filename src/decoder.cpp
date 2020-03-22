@@ -80,12 +80,16 @@ std::vector<RGBPixel> PNGDecoder::decode()
     return pixels;
 }
 
-template<typename T>
-void PNGDecoder::unfilterBytes(std::vector<T>& t, int yPos, std::vector<std::vector<T>> original, uint8_t filterMethod, int bpp)
+void PNGDecoder::unfilterBytes(
+    std::vector<uint8_t>& bytes, 
+    int yPos, 
+    std::vector<std::vector<uint8_t>> original, 
+    uint8_t filterMethod, int bpp
+)
 {
     switch (filterMethod) {
         case PNG_filter_type::SUB:
-            SubFilter::decode(t, bpp);
+            SubFilter::decode(bytes, bpp);
             break;
 
         case PNG_filter_type::AVERAGE:
@@ -108,57 +112,31 @@ void PNGDecoder::processScanlines(const std::string buffer)
     switch (hdr.color_type) {
         case PNG_color_type::RGB:
         case PNG_color_type::RGBA: {
-            if (hdr.bit_depth == 8) {
+            int multiplier = hdr.color_type == PNG_color_type::RGB ? 3 : 4;
 
-                int multiplier = hdr.color_type == PNG_color_type::RGB ? 3 : 4;
-                std::vector<std::vector<uint8_t>> unfilteredBytes;
-                int cursor = 0;
+            if (hdr.bit_depth == 2) {
+                multiplier *= 2;
+            }
 
-                for (int scanline = 0; scanline < hdr.height; scanline++) {
-                    uint8_t filter_byte = buffer[cursor];
-                    cursor++;
-                    std::vector<uint8_t> rowBytes;
-                    rowBytes.push_back(filter_byte);
+            std::vector<std::vector<uint8_t>> unfilteredBytes;
+            int cursor = 0;
 
-                    for (int column = 0; column < (hdr.width * multiplier); column++) {
-                        int pos = cursor + column;
-                        if (pos < buffer.size()) {
-                            rowBytes.push_back(static_cast<uint8_t>(buffer[pos]));
-                        }
-                        cursor++;
+            for (int scanline = 0; scanline < hdr.height; scanline++) {
+                uint8_t filter_byte = buffer[cursor];
+                cursor++;
+                std::vector<uint8_t> rowBytes;
+                rowBytes.push_back(filter_byte);
+
+                for (int column = 0; column < (hdr.width * multiplier); column++) {
+                    int pos = cursor + column;
+                    if (pos < buffer.size()) {
+                        rowBytes.push_back(static_cast<uint8_t>(buffer[pos]));
                     }
-
-                    unfilterBytes(rowBytes, scanline, unfilteredBytes, filter_byte, multiplier);
-                    unfilteredBytes.push_back(rowBytes);
+                    cursor++;
                 }
 
-            } else if (hdr.bit_depth == 16) {
-                
-                int multiplier = hdr.color_type == PNG_color_type::RGB ? 3 : 4;
-                std::vector<std::vector<uint16_t>> unfilteredBytes;
-                int cursor = 0;
-
-                for (int scanline = 0; scanline < hdr.height; scanline++) {
-                    uint16_t filter_byte = static_cast<uint16_t>(buffer[cursor]);
-                    cursor++;
-                    std::vector<uint16_t> rowBytes;
-                    rowBytes.push_back(filter_byte);
-
-                    for (int column = 0; column < (hdr.width * multiplier); column++) {
-                        int pos = cursor + column;
-                        int pos2 = pos + 1;
-                        if (pos2 < buffer.size()) {
-                            rowBytes.push_back(static_cast<uint16_t>(
-                                (buffer[pos] << 8) | buffer[pos2])
-                            );
-                        }
-                        cursor += 2;
-                    }
-
-                    unfilterBytes(rowBytes, scanline, unfilteredBytes, filter_byte, multiplier * 2);
-                    unfilteredBytes.push_back(rowBytes);
-                }
-
+                unfilterBytes(rowBytes, scanline, unfilteredBytes, filter_byte, multiplier);
+                unfilteredBytes.push_back(rowBytes);
             }
         }
         

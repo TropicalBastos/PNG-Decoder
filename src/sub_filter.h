@@ -6,10 +6,12 @@
 class SubFilter
 {
 public:
-    template <typename T>
-    static inline void decode(std::vector<T>& t, int bpp)
+    static inline void decode(std::vector<uint8_t>& bytes, int bpp)
     {
-
+        int x = bpp + 1;
+        for (; x < bytes.size(); ++x) {
+            bytes[x] = bytes[x] + bytes[x - bpp];
+        }
     }
 };
 

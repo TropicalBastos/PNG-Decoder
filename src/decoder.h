@@ -29,8 +29,13 @@ private:
     void readAppropriateChunk(PNG_data_type type, uint32_t len);
     std::string readIDATStream(uint32_t len);
     void processScanlines(const std::string buffer);
-    template<typename T>
-    void unfilterBytes(std::vector<T>& t, int yPos, std::vector<std::vector<T>> original, uint8_t filterMethod, int bpp);
+    
+    void unfilterBytes(
+        std::vector<uint8_t>& bytes, 
+        int yPos, 
+        std::vector<std::vector<uint8_t>> original, 
+        uint8_t filterMethod, int bpp
+    );
 };
 
 #endif
