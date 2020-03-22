@@ -2,6 +2,7 @@
 #include "./zlib/zlib.h"
 #include <iostream>
 #include <arpa/inet.h>
+#include "sub_filter.h"
 
 #define CHUNK 16384
 #define ERROR_STRING std::string("ERROR")
@@ -79,6 +80,28 @@ std::vector<RGBPixel> PNGDecoder::decode()
     return pixels;
 }
 
+template<typename T>
+void PNGDecoder::unfilterBytes(std::vector<T>& t, int yPos, std::vector<std::vector<T>> original, uint8_t filterMethod, int bpp)
+{
+    switch (filterMethod) {
+        case PNG_filter_type::SUB:
+            SubFilter::decode(t, bpp);
+            break;
+
+        case PNG_filter_type::AVERAGE:
+            break;
+
+        case PNG_filter_type::UP:
+            break;
+        
+        case PNG_filter_type::PAETH:
+            break;
+
+        default:
+            break;
+    }
+}
+
 void PNGDecoder::processScanlines(const std::string buffer)
 {
 
@@ -88,7 +111,7 @@ void PNGDecoder::processScanlines(const std::string buffer)
             if (hdr.bit_depth == 8) {
 
                 int multiplier = hdr.color_type == PNG_color_type::RGB ? 3 : 4;
-                std::vector<std::vector<uint8_t>> filteredBytes;
+                std::vector<std::vector<uint8_t>> unfilteredBytes;
                 int cursor = 0;
 
                 for (int scanline = 0; scanline < hdr.height; scanline++) {
@@ -105,13 +128,14 @@ void PNGDecoder::processScanlines(const std::string buffer)
                         cursor++;
                     }
 
-                    filteredBytes.push_back(rowBytes);
+                    unfilterBytes(rowBytes, scanline, unfilteredBytes, filter_byte, multiplier);
+                    unfilteredBytes.push_back(rowBytes);
                 }
 
             } else if (hdr.bit_depth == 16) {
                 
                 int multiplier = hdr.color_type == PNG_color_type::RGB ? 3 : 4;
-                std::vector<std::vector<uint16_t>> filteredBytes;
+                std::vector<std::vector<uint16_t>> unfilteredBytes;
                 int cursor = 0;
 
                 for (int scanline = 0; scanline < hdr.height; scanline++) {
@@ -131,7 +155,8 @@ void PNGDecoder::processScanlines(const std::string buffer)
                         cursor += 2;
                     }
 
-                    filteredBytes.push_back(rowBytes);
+                    unfilterBytes(rowBytes, scanline, unfilteredBytes, filter_byte, multiplier * 2);
+                    unfilteredBytes.push_back(rowBytes);
                 }
 
             }
