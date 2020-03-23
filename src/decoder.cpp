@@ -121,16 +121,18 @@ void PNGDecoder::buildPixels(std::vector<std::vector<uint8_t>> unfilteredBytes, 
                     if (unfilteredBytes[h].size() < bpp) {
                         continue;
                     }
-                    
+
+                    RGBPixel pixel;
+
                     if (hdr.bit_depth == 8) {
-                        RGBPixel pixel { 
-                            unfilteredBytes[h][w],
-                            unfilteredBytes[h][w + 1],
-                            unfilteredBytes[h][w + 2] 
-                        };
+                        pixel.red = unfilteredBytes[h][w];
+                        pixel.green = unfilteredBytes[h][w + 1];
+                        pixel.blue = unfilteredBytes[h][w + 2];
 
                         if (hdr.color_type == PNG_color_type::RGBA) {
                             pixel.alpha = unfilteredBytes[h][w + 3];
+                        } else {
+                            pixel.alpha = 255;
                         }
                     } else if (hdr.bit_depth == 16) {
                         RGBPixel pixel;
@@ -140,8 +142,12 @@ void PNGDecoder::buildPixels(std::vector<std::vector<uint8_t>> unfilteredBytes, 
 
                         if (hdr.color_type == PNG_color_type::RGBA) {
                             pixel.alpha = (unfilteredBytes[h][w + 6] << 8) | unfilteredBytes[h][w + 7];
+                        } else {
+                            pixel.alpha = 255;
                         }
                     }
+
+                    pixels.push_back(pixel);
                 }
 
                 scanlines.push_back(pixels);

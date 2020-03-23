@@ -14,6 +14,20 @@ void event_loop() {
     }
 }
 
+void render(SDL_Renderer* renderer, std::vector<PixelScanline> pixels)
+{
+    for (int y = 0; y < pixels.size(); y++) {
+        for (int x = 0; x < pixels[y].size(); x++) {
+            RGBPixel pixel = pixels[y][x];
+            //printf("R: %d | G: %d | B: %d\n", pixel.red, pixel.green, pixel.blue);
+            SDL_SetRenderDrawColor(renderer, pixel.red, pixel.green, pixel.blue, pixel.alpha);
+            SDL_RenderDrawPoint(renderer, x, y);
+        }
+    }
+    
+    SDL_RenderPresent(renderer);
+}
+
 int main(int argc, char** argv) {
     if (argc < 2) {
         std::cerr << "Please provide the path to a single file as an argument" << std::endl;
@@ -29,16 +43,13 @@ int main(int argc, char** argv) {
     }
 
     SDL_Window *window;
+    SDL_Renderer *renderer;
     PNG_header pngHdr = decoder.getPNGHeader();
-
-    window = SDL_CreateWindow(
-        "PNG Decoder",                  // window title
-        0,                              // initial x position
-        0,                              // initial y position
-        pngHdr.width,                            // width, in pixels
-        pngHdr.height,                            // height, in pixels
-        SDL_WINDOW_OPENGL               // flags
-    );
+    SDL_CreateWindowAndRenderer(pngHdr.width, pngHdr.height, 0, &window, &renderer);
+    SDL_SetWindowTitle(window, "PNG Decoder");
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+    render(renderer, pixels);
 
     if (window == NULL) {
         // In the case that the window could not be made...
