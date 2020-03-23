@@ -10,14 +10,13 @@ class PNGDecoder {
 public:
     PNGDecoder(char* path);
     ~PNGDecoder();
-    std::vector<RGBPixel> decode();
+    std::vector<PixelScanline> decode();
     uint32_t toLittleEndian(unsigned char* buffer);
 private:
     std::fstream fs;
     PNG_signature signature;
     PNG_header hdr;
-    std::vector<RGBPixel> pixels;
-    std::vector<std::vector<uint32_t>> scanLines;
+    std::vector<PixelScanline> scanlines;
     unsigned cpos = 12;
 
     bool checkSignature();
@@ -29,13 +28,15 @@ private:
     void readAppropriateChunk(PNG_data_type type, uint32_t len);
     std::string readIDATStream(uint32_t len);
     void processScanlines(const std::string buffer);
-    
+
     void unfilterBytes(
         std::vector<uint8_t>& bytes, 
         int yPos, 
         std::vector<std::vector<uint8_t>> original, 
         uint8_t filterMethod, int bpp
     );
+
+    void buildPixels(std::vector<std::vector<uint8_t>> unfilteredBytes, int bpp);
 };
 
 #endif

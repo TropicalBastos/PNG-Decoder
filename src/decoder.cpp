@@ -26,17 +26,16 @@ PNGDecoder::~PNGDecoder()
         fs.close();
 }
 
-std::vector<RGBPixel> PNGDecoder::decode()
+std::vector<PixelScanline> PNGDecoder::decode()
 {
     // reset inner pixel data
-    pixels = std::vector<RGBPixel>();
-    scanLines = std::vector<std::vector<uint32_t>>();
+    scanlines = std::vector<PixelScanline>();
 
     if (checkSignature()) {
         std::cout << "PNG signature verified" << std::endl;
     } else {
         std::cerr << "Not a PNG file..." << std::endl;
-        return std::vector<RGBPixel>();
+        return std::vector<PixelScanline>();
     }
 
     unsigned len = scanNextDataLen();
@@ -73,11 +72,12 @@ std::vector<RGBPixel> PNGDecoder::decode()
         }
     }
 
-    if (scanLines.size() == 0) {
-        return pixels;
+    if (scanlines.size() == 0) {
+        std::cerr << "No pixel data decoded" << std::endl;
+        exit(EXIT_FAILURE);
     }
 
-    return pixels;
+    return scanlines;
 }
 
 void PNGDecoder::unfilterBytes(
@@ -106,16 +106,65 @@ void PNGDecoder::unfilterBytes(
     }
 }
 
+void PNGDecoder::buildPixels(std::vector<std::vector<uint8_t>> unfilteredBytes, int bpp)
+{
+    scanlines = std::vector<PixelScanline>();
+
+    switch (hdr.color_type) {
+        case PNG_color_type::RGB:
+        case PNG_color_type::RGBA: {
+            for (int h = 0; h < hdr.height; h++) {
+
+                PixelScanline pixels;
+
+                for (int w = 0; w < hdr.width; w += bpp) {
+                    if (unfilteredBytes[h].size() < bpp) {
+                        continue;
+                    }
+                    
+                    if (hdr.bit_depth == 8) {
+                        RGBPixel pixel { 
+                            unfilteredBytes[h][w],
+                            unfilteredBytes[h][w + 1],
+                            unfilteredBytes[h][w + 2] 
+                        };
+
+                        if (hdr.color_type == PNG_color_type::RGBA) {
+                            pixel.alpha = unfilteredBytes[h][w + 3];
+                        }
+                    } else if (hdr.bit_depth == 16) {
+                        RGBPixel pixel;
+                        pixel.red = (unfilteredBytes[h][w] << 8) | unfilteredBytes[h][w + 1];
+                        pixel.green = (unfilteredBytes[h][w + 2] << 8) | unfilteredBytes[h][w + 3];
+                        pixel.blue = (unfilteredBytes[h][w + 4] << 8) | unfilteredBytes[h][w + 5];
+
+                        if (hdr.color_type == PNG_color_type::RGBA) {
+                            pixel.alpha = (unfilteredBytes[h][w + 6] << 8) | unfilteredBytes[h][w + 7];
+                        }
+                    }
+                }
+
+                scanlines.push_back(pixels);
+            }
+        }
+
+        default:
+            break;
+    }
+}
+
 void PNGDecoder::processScanlines(const std::string buffer)
 {
 
     switch (hdr.color_type) {
         case PNG_color_type::RGB:
         case PNG_color_type::RGBA: {
-            int multiplier = hdr.color_type == PNG_color_type::RGB ? 3 : 4;
+
+            // bytes per pixel
+            int bpp = hdr.color_type == PNG_color_type::RGB ? 3 : 4;
 
             if (hdr.bit_depth == 2) {
-                multiplier *= 2;
+                bpp *= 2;
             }
 
             std::vector<std::vector<uint8_t>> unfilteredBytes;
@@ -127,7 +176,7 @@ void PNGDecoder::processScanlines(const std::string buffer)
                 std::vector<uint8_t> rowBytes;
                 rowBytes.push_back(filter_byte);
 
-                for (int column = 0; column < (hdr.width * multiplier); column++) {
+                for (int column = 0; column < (hdr.width * bpp); column++) {
                     int pos = cursor + column;
                     if (pos < buffer.size()) {
                         rowBytes.push_back(static_cast<uint8_t>(buffer[pos]));
@@ -135,9 +184,12 @@ void PNGDecoder::processScanlines(const std::string buffer)
                     cursor++;
                 }
 
-                unfilterBytes(rowBytes, scanline, unfilteredBytes, filter_byte, multiplier);
+                unfilterBytes(rowBytes, scanline, unfilteredBytes, filter_byte, bpp);
                 unfilteredBytes.push_back(rowBytes);
             }
+
+            buildPixels(unfilteredBytes, bpp);
+            break;
         }
         
         default:
