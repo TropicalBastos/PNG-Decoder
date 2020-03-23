@@ -12,6 +12,7 @@ public:
     ~PNGDecoder();
     std::vector<PixelScanline> decode();
     uint32_t toLittleEndian(unsigned char* buffer);
+    PNG_header inline getPNGHeader() const { return hdr; }
 private:
     std::fstream fs;
     PNG_signature signature;

@@ -29,13 +29,14 @@ int main(int argc, char** argv) {
     }
 
     SDL_Window *window;
+    PNG_header pngHdr = decoder.getPNGHeader();
 
     window = SDL_CreateWindow(
         "PNG Decoder",                  // window title
         0,                              // initial x position
         0,                              // initial y position
-        640,                            // width, in pixels
-        480,                            // height, in pixels
+        pngHdr.width,                            // width, in pixels
+        pngHdr.height,                            // height, in pixels
         SDL_WINDOW_OPENGL               // flags
     );
 
