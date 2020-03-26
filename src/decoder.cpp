@@ -85,7 +85,7 @@ std::vector<PixelScanline> PNGDecoder::decode()
 
 void PNGDecoder::unfilterBytes(
     std::vector<uint8_t>& bytes, 
-    std::vector<std::vector<uint8_t>> original, 
+    std::vector<std::vector<uint8_t>>& original, 
     uint8_t filterMethod, 
     int bpp,
     int yPos
