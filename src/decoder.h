@@ -28,13 +28,14 @@ private:
     void readHdr();
     void readAppropriateChunk(PNG_data_type type, uint32_t len);
     std::string readIDATStream(uint32_t len);
-    void processScanlines(const std::string buffer);
+    void processScanlines(const std::string& buffer);
 
     void unfilterBytes(
-        std::vector<uint8_t>& bytes, 
-        int yPos, 
+        std::vector<uint8_t>& bytes,
         std::vector<std::vector<uint8_t>> original, 
-        uint8_t filterMethod, int bpp
+        uint8_t filterMethod, 
+        int bpp,
+        int yPos
     );
 
     void buildPixels(std::vector<std::vector<uint8_t>> unfilteredBytes, int bpp);

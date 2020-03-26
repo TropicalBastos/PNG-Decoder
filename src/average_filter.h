@@ -7,12 +7,17 @@
 class AverageFilter
 {
 public:
-    static inline void decode(std::vector<uint8_t>& bytes, std::vector<std::vector<uint8_t>>& original, int bpp)
+    static inline void decode(std::vector<uint8_t>& bytes, std::vector<std::vector<uint8_t>>& original, int bpp, int yPos)
     {
-        for (int y = 1; y < original.size(); y++) {
-            for (int x = (bpp + 1); x < bytes.size(); x++) {
-                bytes[x] = std::floor((bytes[x - bpp] + original[y - 1][x]) / 2);
+        for (int x = (bpp + 1); x < bytes.size(); x++) {
+            uint8_t above;
+            if (yPos < 1) {
+                above = 0;
+            } else {
+                above = original[yPos - 1][x];
             }
+
+            bytes[x] = std::floor((bytes[x - bpp] + above) / 2);
         }
     }
 };

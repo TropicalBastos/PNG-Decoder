@@ -5,6 +5,7 @@
 #include "sub_filter.h"
 #include "up_filter.h"
 #include "average_filter.h"
+#include "paeth_filter.h"
 
 #define CHUNK 16384
 #define ERROR_STRING std::string("ERROR")
@@ -84,9 +85,10 @@ std::vector<PixelScanline> PNGDecoder::decode()
 
 void PNGDecoder::unfilterBytes(
     std::vector<uint8_t>& bytes, 
-    int yPos, 
     std::vector<std::vector<uint8_t>> original, 
-    uint8_t filterMethod, int bpp
+    uint8_t filterMethod, 
+    int bpp,
+    int yPos
 )
 {
     switch (filterMethod) {
@@ -95,14 +97,15 @@ void PNGDecoder::unfilterBytes(
             break;
 
         case PNG_filter_type::AVERAGE:
-            AverageFilter::decode(bytes, original, bpp);
+            AverageFilter::decode(bytes, original, bpp, yPos);
             break;
 
         case PNG_filter_type::UP:
-            UpFilter::decode(bytes, original);
+            UpFilter::decode(bytes, original, yPos);
             break;
         
         case PNG_filter_type::PAETH:
+            PaethFilter::decode(bytes, original, bpp, yPos);
             break;
 
         default:
@@ -163,7 +166,7 @@ void PNGDecoder::buildPixels(std::vector<std::vector<uint8_t>> unfilteredBytes, 
     }
 }
 
-void PNGDecoder::processScanlines(const std::string buffer)
+void PNGDecoder::processScanlines(const std::string& buffer)
 {
 
     switch (hdr.color_type) {
@@ -186,14 +189,13 @@ void PNGDecoder::processScanlines(const std::string buffer)
                 rowBytes.push_back(filter_byte);
 
                 for (int column = 0; column < (hdr.width * bpp); column++) {
-                    int pos = cursor + column;
-                    if (pos < buffer.size()) {
-                        rowBytes.push_back(static_cast<uint8_t>(buffer[pos]));
+                    if (cursor < buffer.size()) {
+                        rowBytes.push_back(static_cast<uint8_t>(buffer[cursor]));
                     }
                     cursor++;
                 }
 
-                unfilterBytes(rowBytes, scanline, unfilteredBytes, filter_byte, bpp);
+                unfilterBytes(rowBytes, unfilteredBytes, filter_byte, bpp, scanline);
                 unfilteredBytes.push_back(rowBytes);
             }
 

@@ -6,12 +6,17 @@
 class UpFilter
 {
 public:
-    static inline void decode(std::vector<uint8_t>& bytes, std::vector<std::vector<uint8_t>>& original)
+    static inline void decode(std::vector<uint8_t>& bytes, std::vector<std::vector<uint8_t>>& original, int yPos)
     {
-        for (int y = 1; y < original.size(); y++) {
-            for (int x = 1; x < bytes.size(); x++) {
-                bytes[x] = bytes[x] + original[y - 1][x];
+        for (int x = 1; x < bytes.size(); x++) {
+            uint8_t above;
+            if (yPos < 1) {
+                above = 0;
+            } else {
+                above = original[yPos - 1][x];
             }
+
+            bytes[x] = bytes[x] + above;
         }
     }
 };
