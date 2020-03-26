@@ -8,8 +8,7 @@ class SubFilter
 public:
     static inline void decode(std::vector<uint8_t>& bytes, int bpp)
     {
-        int x = bpp + 1;
-        for (; x < bytes.size(); ++x) {
+        for (int x = (bpp + 1); x < bytes.size(); x++) {
             bytes[x] = bytes[x] + bytes[x - bpp];
         }
     }

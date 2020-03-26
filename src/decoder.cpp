@@ -3,6 +3,8 @@
 #include <iostream>
 #include <arpa/inet.h>
 #include "sub_filter.h"
+#include "up_filter.h"
+#include "average_filter.h"
 
 #define CHUNK 16384
 #define ERROR_STRING std::string("ERROR")
@@ -93,9 +95,11 @@ void PNGDecoder::unfilterBytes(
             break;
 
         case PNG_filter_type::AVERAGE:
+            AverageFilter::decode(bytes, original, bpp);
             break;
 
         case PNG_filter_type::UP:
+            UpFilter::decode(bytes, original);
             break;
         
         case PNG_filter_type::PAETH:
@@ -117,7 +121,7 @@ void PNGDecoder::buildPixels(std::vector<std::vector<uint8_t>> unfilteredBytes, 
 
                 PixelScanline pixels;
 
-                for (int w = 0; w < hdr.width; w += bpp) {
+                for (int w = 0; w < (hdr.width * bpp); w += bpp) {
                     if (unfilteredBytes[h].size() < bpp) {
                         continue;
                     }
@@ -169,7 +173,7 @@ void PNGDecoder::processScanlines(const std::string buffer)
             // bytes per pixel
             int bpp = hdr.color_type == PNG_color_type::RGB ? 3 : 4;
 
-            if (hdr.bit_depth == 2) {
+            if (hdr.bit_depth == 16) {
                 bpp *= 2;
             }
 
@@ -177,8 +181,7 @@ void PNGDecoder::processScanlines(const std::string buffer)
             int cursor = 0;
 
             for (int scanline = 0; scanline < hdr.height; scanline++) {
-                uint8_t filter_byte = buffer[cursor];
-                cursor++;
+                uint8_t filter_byte = buffer[cursor++];
                 std::vector<uint8_t> rowBytes;
                 rowBytes.push_back(filter_byte);
 
