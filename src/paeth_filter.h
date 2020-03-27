@@ -37,7 +37,9 @@ public:
             }
 
             if (x >= (bpp + 1)) {
-                upperLeft = original[yPos - 1][x - bpp];
+                if (yPos >= 1) {
+                    upperLeft = original[yPos - 1][x - bpp];
+                }
                 left = bytes[x - bpp];
             }
 

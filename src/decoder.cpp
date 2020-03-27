@@ -18,6 +18,8 @@
             len = scanNextDataLen();\
             cpos += FOUR_BYTE_LEN;
 
+#define BIT_MASK_16_8 0x0011
+
 PNGDecoder::PNGDecoder(char* path)
 {
     fs.open(path, std::fstream::in);
@@ -143,12 +145,12 @@ void PNGDecoder::buildPixels(std::vector<std::vector<uint8_t>>& unfilteredBytes,
                         }
                     } else if (hdr.bit_depth == 16) {
                         RGBPixel pixel;
-                        pixel.red = (unfilteredBytes[h][w] << 8) | unfilteredBytes[h][w + 1];
-                        pixel.green = (unfilteredBytes[h][w + 2] << 8) | unfilteredBytes[h][w + 3];
-                        pixel.blue = (unfilteredBytes[h][w + 4] << 8) | unfilteredBytes[h][w + 5];
+                        pixel.red = unfilteredBytes[h][w + 1];
+                        pixel.green = unfilteredBytes[h][w + 3];
+                        pixel.blue = unfilteredBytes[h][w + 5];
 
                         if (hdr.color_type == PNG_color_type::RGBA) {
-                            pixel.alpha = (unfilteredBytes[h][w + 6] << 8) | unfilteredBytes[h][w + 7];
+                            pixel.alpha = unfilteredBytes[h][w + 7];
                         } else {
                             pixel.alpha = 255;
                         }
