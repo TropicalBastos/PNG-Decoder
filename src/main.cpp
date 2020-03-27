@@ -19,7 +19,6 @@ void render(SDL_Renderer* renderer, std::vector<PixelScanline> pixels)
     for (int y = 0; y < pixels.size(); y++) {
         for (int x = 0; x < pixels[y].size(); x++) {
             RGBPixel pixel = pixels[y][x];
-            //printf("R: %d | G: %d | B: %d\n", pixel.red, pixel.green, pixel.blue);
             SDL_SetRenderDrawColor(renderer, pixel.red, pixel.green, pixel.blue, pixel.alpha);
             SDL_RenderDrawPoint(renderer, x, y);
         }

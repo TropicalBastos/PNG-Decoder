@@ -27,19 +27,21 @@ public:
 
     static inline void decode(std::vector<uint8_t>& bytes, std::vector<std::vector<uint8_t>>& original, int bpp, int yPos)
     {
-        for (int x = (bpp + 1); x < bytes.size(); x++) {
-            uint8_t above;
-            uint8_t upperLeft;
-            if (yPos < 1) {
-                above = 0;
-                upperLeft = 0;
-            } else {
+        for (int x = 1; x < bytes.size(); x++) {
+            uint8_t above = 0;
+            uint8_t upperLeft = 0;
+            uint8_t left = 0;
+
+            if (yPos >= 1) {
                 above = original[yPos - 1][x];
-                upperLeft = original[yPos - 1][x - bpp];
             }
 
-            uint8_t left = bytes[x - bpp];
-            bytes[x] = paethPredictor(left, above, upperLeft);
+            if (x >= (bpp + 1)) {
+                upperLeft = original[yPos - 1][x - bpp];
+                left = bytes[x - bpp];
+            }
+
+            bytes[x] = (bytes[x] + paethPredictor(left, above, upperLeft)) % 256;
         }
     }
 };

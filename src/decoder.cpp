@@ -113,7 +113,7 @@ void PNGDecoder::unfilterBytes(
     }
 }
 
-void PNGDecoder::buildPixels(std::vector<std::vector<uint8_t>> unfilteredBytes, int bpp)
+void PNGDecoder::buildPixels(std::vector<std::vector<uint8_t>>& unfilteredBytes, int bpp)
 {
     scanlines = std::vector<PixelScanline>();
 
@@ -124,7 +124,7 @@ void PNGDecoder::buildPixels(std::vector<std::vector<uint8_t>> unfilteredBytes, 
 
                 PixelScanline pixels;
 
-                for (int w = 0; w < (hdr.width * bpp); w += bpp) {
+                for (int w = 1; w < (hdr.width * bpp); w += bpp) {
                     if (unfilteredBytes[h].size() < bpp) {
                         continue;
                     }

@@ -38,7 +38,7 @@ private:
         int yPos
     );
 
-    void buildPixels(std::vector<std::vector<uint8_t>> unfilteredBytes, int bpp);
+    void buildPixels(std::vector<std::vector<uint8_t>>& unfilteredBytes, int bpp);
 };
 
 #endif
