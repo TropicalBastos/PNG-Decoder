@@ -27,6 +27,31 @@ void render(SDL_Renderer* renderer, std::vector<PixelScanline> pixels)
     SDL_RenderPresent(renderer);
 }
 
+float getDpi() {
+    float dpi;
+    SDL_GetDisplayDPI(0, 0, &dpi, 0);
+    return dpi;
+}
+
+std::vector<PixelScanline> scaleDownDpi(const std::vector<PixelScanline>& pixels)
+{
+    float dpi = getDpi();
+
+    if (dpi < 128) return pixels;
+
+    std::vector<PixelScanline> newSizePixels;
+
+    for (int y = 0; y < pixels.size(); y += 2) {
+        PixelScanline scanline;
+        for (int x = 0; x < pixels[y].size(); x += 2) {
+            scanline.push_back(pixels[y][x]);
+        }
+        newSizePixels.push_back(scanline);
+    }
+
+    return newSizePixels;
+}
+
 int main(int argc, char** argv) {
     if (argc < 2) {
         std::cerr << "Please provide the path to a single file as an argument" << std::endl;
@@ -41,10 +66,19 @@ int main(int argc, char** argv) {
         return 0;
     }
 
+    pixels = scaleDownDpi(pixels);
+
     SDL_Window *window;
     SDL_Renderer *renderer;
     PNG_header pngHdr = decoder.getPNGHeader();
-    SDL_CreateWindowAndRenderer(pngHdr.width, pngHdr.height, 0, &window, &renderer);
+
+    int width = pngHdr.width, height = pngHdr.height;
+    if (getDpi() >= 128) {
+        width = width / 2;
+        height = height / 2;
+    }
+
+    SDL_CreateWindowAndRenderer(width, height, 0, &window, &renderer);
     SDL_SetWindowTitle(window, "PNG Decoder");
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
