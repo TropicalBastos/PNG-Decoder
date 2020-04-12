@@ -44,6 +44,7 @@ enum PNG_data_type
 {
     UNKNOWN,
     IHDR,
+    PLTE,
     IDAT,
     IEND
 };
@@ -53,7 +54,7 @@ enum PNG_color_type
     GRAYSCALE,
     PADDING_1,
     RGB,
-    PLTE,
+    PLTE_TYPE,
     GRAYSCALE_ALPHA,
     PADDING_2,
     RGBA

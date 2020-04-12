@@ -15,7 +15,7 @@ public:
         short pb = std::abs(a - c);
         short pc = std::abs(a + b - c - c);
         /* return input value associated with smallest of pa, pb, pc (with certain priority if equal) */
-        if(pb < pa) { a = b; pa = pb; }
+        if (pb < pa) { a = b; pa = pb; }
         return (pc < pa) ? c : a;
     }
 

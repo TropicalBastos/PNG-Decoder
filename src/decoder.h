@@ -18,6 +18,7 @@ private:
     PNG_signature signature;
     PNG_header hdr;
     std::vector<PixelScanline> scanlines;
+    std::vector<RGBPixel> palette;
     unsigned cpos = 12;
 
     bool checkSignature();
@@ -29,6 +30,7 @@ private:
     void readAppropriateChunk(PNG_data_type type, uint32_t len);
     std::string readIDATStream(uint32_t len);
     void processScanlines(const std::string& buffer);
+    void readPalette(uint32_t len);
 
     void unfilterBytes(
         std::vector<uint8_t>& bytes,

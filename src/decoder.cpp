@@ -6,6 +6,7 @@
 #include "up_filter.h"
 #include "average_filter.h"
 #include "paeth_filter.h"
+#include <unordered_map>
 
 #define CHUNK 16384
 #define ERROR_STRING std::string("ERROR")
@@ -19,6 +20,13 @@
             cpos += FOUR_BYTE_LEN;
 
 #define BIT_MASK_16_8 0x0011
+
+static struct {
+    int sub;
+    int up;
+    int average;
+    int paeth;
+} g_filters;
 
 PNGDecoder::PNGDecoder(char* path)
 {
@@ -35,6 +43,8 @@ std::vector<PixelScanline> PNGDecoder::decode()
 {
     // reset inner pixel data
     scanlines = std::vector<PixelScanline>();
+
+    g_filters = { 0, 0, 0, 0 };
 
     if (checkSignature()) {
         std::cout << "PNG signature verified" << std::endl;
@@ -64,7 +74,12 @@ std::vector<PixelScanline> PNGDecoder::decode()
 
         if (type == PNG_data_type::IHDR) {
             printf("Width: %d | Height: %d\n", hdr.width, hdr.height);
-            printf("Color type: %d | Bit depth: %d | Filter method: %d\n", hdr.color_type, hdr.bit_depth, hdr.filter_method);
+            printf("Color type: %d | Bit depth: %d | Filter method: %d | Interlace method: %d | Compression method: %d\n", 
+            hdr.color_type, 
+            hdr.bit_depth, 
+            hdr.filter_method, 
+            hdr.interlace_method,
+            hdr.compression_method);
         }
 
         // if last known type was IDAT then it did its own stream processing
@@ -82,7 +97,31 @@ std::vector<PixelScanline> PNGDecoder::decode()
         exit(EXIT_FAILURE);
     }
 
+    printf("Filter SUB found %d times\n", g_filters.sub);
+    printf("Filter UP found %d times\n", g_filters.up);
+    printf("Filter AVERAGE found %d times\n", g_filters.average);
+    printf("Filter PAETH found %d times\n", g_filters.paeth);
+
     return scanlines;
+}
+
+void PNGDecoder::readPalette(uint32_t len)
+{
+    if ((len % 3) != 0) {
+        std::cerr << "Chunk length of PLTE invalid!" << std::endl;
+        exit(-1);
+    }
+
+    for (int i = 0; i < (len / 3); i++) {
+        char p[3];
+        fs.read(p, 3);
+        RGBPixel pixel;
+        pixel.alpha = 255;
+        pixel.red = (uint8_t) p[0];
+        pixel.green = (uint8_t) p[1];
+        pixel.blue = (uint8_t) p[2];
+        palette.push_back(pixel);
+    }
 }
 
 void PNGDecoder::unfilterBytes(
@@ -95,18 +134,22 @@ void PNGDecoder::unfilterBytes(
 {
     switch (filterMethod) {
         case PNG_filter_type::SUB:
+            g_filters.sub = g_filters.sub + 1;
             SubFilter::decode(bytes, bpp);
             break;
 
         case PNG_filter_type::AVERAGE:
+            g_filters.average = g_filters.average + 1;
             AverageFilter::decode(bytes, original, bpp, yPos);
             break;
 
         case PNG_filter_type::UP:
+            g_filters.up = g_filters.up + 1;
             UpFilter::decode(bytes, original, yPos);
             break;
         
         case PNG_filter_type::PAETH:
+            g_filters.paeth = g_filters.paeth + 1;
             PaethFilter::decode(bytes, original, bpp, yPos);
             break;
 
@@ -161,6 +204,28 @@ void PNGDecoder::buildPixels(std::vector<std::vector<uint8_t>>& unfilteredBytes,
 
                 scanlines.push_back(pixels);
             }
+
+            break;
+        }
+
+        case PNG_color_type::PLTE_TYPE: {
+            for (int h = 0; h < hdr.height; h++) {
+
+                PixelScanline pixels;
+
+                for (int w = 1; w < hdr.width; w++) {
+                    if (unfilteredBytes[h].size() < bpp) {
+                        continue;
+                    }
+
+                    RGBPixel pixel = palette[unfilteredBytes[h][w]];
+                    pixels.push_back(pixel);
+                }
+
+                scanlines.push_back(pixels);
+            }
+
+            break;
         }
 
         default:
@@ -173,10 +238,11 @@ void PNGDecoder::processScanlines(const std::string& buffer)
 
     switch (hdr.color_type) {
         case PNG_color_type::RGB:
-        case PNG_color_type::RGBA: {
+        case PNG_color_type::RGBA:
+        case PNG_color_type::PLTE_TYPE: {
 
             // bytes per pixel
-            int bpp = hdr.color_type == PNG_color_type::RGB ? 3 : 4;
+            int bpp = hdr.color_type == PNG_color_type::RGB || hdr.color_type == PNG_color_type::PLTE_TYPE ? 3 : 4;
 
             if (hdr.bit_depth == 16) {
                 bpp *= 2;
@@ -254,7 +320,11 @@ std::string PNGDecoder::readIDATStream(uint32_t len)
                 case Z_NEED_DICT:
                     ret = Z_DATA_ERROR;     /* and fall through */
                 case Z_DATA_ERROR:
-                    std::cerr << "Data error" << std::endl;
+                    if (strm.msg != 0) {
+                        std::cerr << strm.msg << std::endl;
+                    } else {
+                        std::cerr << "Data error" << std::endl;
+                    }
                     (void)inflateEnd(&strm);
                     return ERROR_STRING;
                 case Z_MEM_ERROR:
@@ -315,6 +385,10 @@ void PNGDecoder::readAppropriateChunk(PNG_data_type type, uint32_t len)
             readHdr();
             break;
         }
+        case PNG_data_type::PLTE: {
+            readPalette(len);
+            break;
+        }
         case PNG_data_type::IDAT: {
             std::string decompressed = readIDATStream(len);
             processScanlines(decompressed);
@@ -341,6 +415,8 @@ PNG_data_type PNGDecoder::scanChunkHdr()
         std::cout << "Chunk Type: " << chunkId << std::endl;
         if (strcmp(chunkId, "IHDR") == 0) {
             return PNG_data_type::IHDR;
+        } else if (strcmp(chunkId, "PLTE") == 0) {
+            return PNG_data_type::PLTE;
         } else if (strcmp(chunkId, "IDAT") == 0) {
             return PNG_data_type::IDAT;
         } else if (strcmp(chunkId, "IEND") == 0) {
