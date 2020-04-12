@@ -9,20 +9,14 @@
 class PaethFilter
 {
 public:
-    static inline uint8_t paethPredictor(uint8_t left, uint8_t above, uint8_t upperLeft)
+    static inline uint8_t paethPredictor(uint8_t a, uint8_t b, uint8_t c)
     {
-        uint8_t p = (left + above) - upperLeft;
-        uint8_t pa = std::abs(p - left);
-        uint8_t pb = std::abs(p - above);
-        uint8_t pc = std::abs(p - upperLeft);
-
-        if (pa <= pb && pa <= pc) {
-            return left;
-        } else if (pb <= pc) {
-            return above;
-        } else {
-            return upperLeft;
-        }
+        short pa = std::abs(b - c);
+        short pb = std::abs(a - c);
+        short pc = std::abs(a + b - c - c);
+        /* return input value associated with smallest of pa, pb, pc (with certain priority if equal) */
+        if(pb < pa) { a = b; pa = pb; }
+        return (pc < pa) ? c : a;
     }
 
     static inline void decode(std::vector<uint8_t>& bytes, std::vector<std::vector<uint8_t>>& original, int bpp, int yPos)
