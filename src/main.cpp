@@ -33,12 +33,8 @@ float getDpi() {
     return dpi;
 }
 
-std::vector<PixelScanline> scaleDownDpi(const std::vector<PixelScanline>& pixels)
+std::vector<PixelScanline> scaleDownPixels(const std::vector<PixelScanline>& pixels)
 {
-    float dpi = getDpi();
-
-    if (dpi < 128) return pixels;
-
     std::vector<PixelScanline> newSizePixels;
 
     for (int y = 0; y < pixels.size(); y += 2) {
@@ -66,16 +62,17 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    pixels = scaleDownDpi(pixels);
-
     SDL_Window *window;
     SDL_Renderer *renderer;
     PNG_header pngHdr = decoder.getPNGHeader();
-
     int width = pngHdr.width, height = pngHdr.height;
-    if (getDpi() >= 128) {
+
+    SDL_DisplayMode DM;
+    SDL_GetCurrentDisplayMode(0, &DM);
+    if (getDpi() >= 128 && (width > DM.w || height > DM.h)) {
         width = width / 2;
         height = height / 2;
+        pixels = scaleDownPixels(pixels);
     }
 
     SDL_CreateWindowAndRenderer(width, height, 0, &window, &renderer);
