@@ -238,11 +238,10 @@ void PNGDecoder::processScanlines(const std::string& buffer)
 
     switch (hdr.color_type) {
         case PNG_color_type::RGB:
-        case PNG_color_type::RGBA:
-        case PNG_color_type::PLTE_TYPE: {
+        case PNG_color_type::RGBA: {
 
             // bytes per pixel
-            int bpp = hdr.color_type == PNG_color_type::RGB || hdr.color_type == PNG_color_type::PLTE_TYPE ? 3 : 4;
+            int bpp = hdr.color_type == PNG_color_type::RGB ? 3 : 4;
 
             if (hdr.bit_depth == 16) {
                 bpp *= 2;
@@ -268,6 +267,30 @@ void PNGDecoder::processScanlines(const std::string& buffer)
             }
 
             buildPixels(unfilteredBytes, bpp);
+            break;
+        }
+
+        case PNG_color_type::PLTE_TYPE: {
+            std::vector<std::vector<uint8_t>> unfilteredBytes;
+            int cursor = 0;
+
+            for (int scanline = 0; scanline < hdr.height; scanline++) {
+                uint8_t filter_byte = buffer[cursor++];
+                std::vector<uint8_t> rowBytes;
+                rowBytes.push_back(filter_byte);
+
+                for (int column = 0; column < hdr.width; column++) {
+                    if (cursor < buffer.size()) {
+                        rowBytes.push_back(static_cast<uint8_t>(buffer[cursor]));
+                    }
+                    cursor++;
+                }
+
+                unfilterBytes(rowBytes, unfilteredBytes, filter_byte, 8, scanline);
+                unfilteredBytes.push_back(rowBytes);
+            }
+
+            buildPixels(unfilteredBytes, 8);
             break;
         }
         
